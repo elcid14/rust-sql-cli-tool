@@ -33,8 +33,8 @@ enum AnswerOption{
 impl fmt::Display for AnswerOption{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-         AnswerOption::YES => write!(f, "Yes")
-         AnswerOption::NO => write!(f, "No")
+         AnswerOption::YES => write!(f, "Yes"),
+         AnswerOption::NO => write!(f, "No"),
         }
     }
 }
@@ -57,18 +57,14 @@ fn connection_prompts(server_type:SqlType){
 
     println!("Enter Username");
     let mut std_username_input = String::new();
-    io::stdin().read_line(&mut std_username_input)
-
-    println("Are you using SSH or username/password for authentication?")
-
-    let auth_option = match 
+    io::stdin().read_line(&mut std_username_input);
+    println!("Enter 1 for username/password authentication or 2 for ssh authentciation(ensure you can access your key pair files)");
 
 
-    
+    let mut std_auth_type_input = String::new();
+    io::stdin().read_line(&mut std_auth_type_input);
+    let auth_type : usize = std_auth_type_input.trim().parse().unwrap_or(0);
 
-
-
-    
 
 }
 
@@ -77,16 +73,16 @@ fn connection_prompts(server_type:SqlType){
 fn define_an_connect_endpoint(server_type: SqlType){
     match server_type{
         SqlType::POSTGRES => {
-            println!("TEST")
+            connection_prompts(server_type)
         }
         SqlType::SQLITE => {
-            println!("TEST")
+            connection_prompts(server_type)
         }
         SqlType::MARIADB => {
-            println!("TEST")
+            connection_prompts(server_type)
         }
         SqlType::MYSQL => {
-            println!("TEST")
+            connection_prompts(server_type)
         }
     }
 }
