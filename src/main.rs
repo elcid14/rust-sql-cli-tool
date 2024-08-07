@@ -1,9 +1,9 @@
 use std::io;
 use std::fmt;
+use sqlx;
 
 
-// define ENUM for SQL Server Options
-//
+//**Define ENUM for SQL Server Options
 #[derive(Clone)]
 enum SqlType {
     POSTGRES,
@@ -12,6 +12,7 @@ enum SqlType {
     MYSQL
 }
 
+//**Define dispaly method for SqlType Enum */
 impl fmt::Display for SqlType{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -40,11 +41,43 @@ impl fmt::Display for AnswerOption{
 }
 
 
+#[derive(Clone)]
+enum AuthType{
+    AUTHTYPE {name:String}
+}
 
+
+
+
+// ** define_auth_connection_type returns valid connection string based on auth type and server type.
+// ** ensures connection string is formatted for username/password or ssh cert connection type
+// ** returns String
+//TODO: 
+
+fn define_auth_connection_type(auth_type: i8, server_type: SqlType) -> String {
+
+    match server_type{
+        SqlType::POSTGRES => {
+            if auth_type == 1{
+                return String::from("postgres")
+            } else{
+                return String::from("postgres")
+            }
+        }
+
+        _ =>{
+            return String::from("F")
+        }
+
+    }
+}
 
 
 
 //define a regex for hostname
+//TODO: Define a regex fn to valiadate hostname, i.e. is this IPV4/6, or valid DNS, or local host
+
+// ** connection_prompts creates the connection string based on sql server type. 
 
 fn connection_prompts(server_type:SqlType){
     // Get the user input for the following: hostname, username,password,ssh key,port
@@ -64,6 +97,22 @@ fn connection_prompts(server_type:SqlType){
     let mut std_auth_type_input = String::new();
     io::stdin().read_line(&mut std_auth_type_input);
     let auth_type : usize = std_auth_type_input.trim().parse().unwrap_or(0);
+
+
+
+    match auth_type {
+        1 => {
+            println!("username/password");
+        }
+
+        2 => {
+            println!("ssh");
+        }
+        _ => {
+            println!("Invalid Selection, please select from the options below");
+
+        }
+    }
 
 
 }
@@ -86,10 +135,6 @@ fn define_an_connect_endpoint(server_type: SqlType){
         }
     }
 }
-
-
-// define function to get keyboard interrupt option
-
 
 // define function to creat progress bar when connecting
 
@@ -131,7 +176,7 @@ fn select_sql_server_type() -> SqlType{
              return endpoint_options[3].clone()
         }
         _ => {
-            println!("Invalid Selection, please select from the options eblow");
+            println!("Invalid Selection, please select from the options below");
             return select_sql_server_type()
         }
     };
