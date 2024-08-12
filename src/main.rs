@@ -1,6 +1,5 @@
 use std::io;
 use std::fmt;
-use sqlx;
 
 
 //**Define ENUM for SQL Server Options
@@ -33,18 +32,59 @@ enum AuthType{
 }
 
 
+// ** Utility function to get filepath for certs if needed.
+// fn get_cert_files (auth_type: usize, filepaths:Vec<String>) -> Vec<String>{
+
+// }
+
+
+
+
+// ** Utility function to get password
+
+fn get_password(auth_type: Option<usize>) -> Option<String> {
+    match auth_type {
+        Some(1) => {
+            println!("Enter password");
+            let mut std_password_input = String::new();
+            io::stdin().read_line(&mut std_password_input).expect("Failed to read passowrd");
+            Some(std_password_input.trim().to_string())
+
+    }
+
+    _ => {
+        return None
+    }
+}
+}
+
+
 // ** define_auth_connection_type returns valid connection string based on auth type and server type.
 // ** ensures connection string is formatted for username/password or ssh cert connection type
 // ** returns String
 
-fn define_auth_connection_type(auth_type: Option<usize>, server_type: Option<SqlType>) -> String {
+fn define_auth_connection_type(auth_type: Option<usize>, server_type: Option<SqlType>, username:String, host:String, database:String, port:String) -> String {
+
+        let mut password: String = String::from("");
+        let mut ssl_cert_path: String = String::from("");
+        let mut ssl_key_path:String = String::from("");
+        let mut ssl_root_cert_path: String = String::from("");
+
+        if auth_type == Some(1) {
+            password = get_password(auth_type).expect("Not valid password string");
+            println!("Password entered succesfully");
+
+        } else {
+            println!("Using certificate based auth instead of username/passowrd");
+            println!("Please enter the following ");
+        }
 
     match (server_type, auth_type){
         (Some(SqlType::POSTGRES), Some(auth_type)) => {
             if auth_type == 1{
-                return String::from("postgres://postgres:password@localhost/test")
+                return String::from(format!("postgres://{username}:{password}@{host}:{port}/{database}"))
             } else {
-                return String::from("postgres")
+                return String::from(format!("postgres://{username}:{password}@{host}:{port}/{database}?sslmode=require&sslcert={ssl_cert_path}&sslkey={ssl_key_path}&sslrootcert={ssl_root_cert_path}"))
             }
         }
 
@@ -80,6 +120,22 @@ fn define_auth_connection_type(auth_type: Option<usize>, server_type: Option<Sql
 }
 
 
+// ** define helper function that returns number of connection pools
+
+fn number_of_connection_pools(connection_option:&String) -> usize{
+
+    if connection_option == "y" {
+        println!("Enter number of connections between 1 and 10");
+        let mut std_connection_number_input = String::new();
+        io::stdin().read_line(&mut std_connection_number_input).expect("Failed to read line");
+        let number_connections: usize = std_connection_number_input.trim().parse().expect("Please enter a valid number");
+        return number_connections;
+    
+    } else {
+        return 1;
+    }
+}
+
 
 //define a regex for hostname
 //TODO: Define a regex fn to valiadate hostname, i.e. is this IPV4/6, or valid DNS, or local host
@@ -99,23 +155,37 @@ fn connection_prompts(server_type:SqlType) -> String{
     let mut std_username_input = String::new();
     let _ = io::stdin().read_line(&mut std_username_input);
 
-    //Databse
+    //Database
+    println!("Enter name of database you wish to connect to");
     let mut std_database_input: String = String::new();
     let _ = io::stdin().read_line(&mut std_database_input);
 
+    //Port
+    println!("Enter the port to connect to your endpoint");
+    let mut std_port_input:String = String::new();
+    let _ = io::stdin().read_line( &mut std_port_input);
+
+    //Connection pools
+
+    println!("Do you want to poool your connections?(y/n)");
+    let mut std_connection_answer_input: String = String::new();
+    let _ = io::stdin().read_line(&mut std_connection_answer_input);
+
+
     //Auth Type
     println!("Enter 1 for username/password authentication or 2 for ssh authentciation(ensure you can access your key pair files)");
-    let mut std_auth_type_input = String::new();
+    let mut std_auth_type_input: String = String::new();
     let _ = io::stdin().read_line(&mut std_auth_type_input);
     let auth_type : usize = std_auth_type_input.trim().parse().unwrap_or(0);
 
+    let number_connections: usize = number_of_connection_pools(&std_connection_answer_input);
 
-    let connection_string: String =  define_auth_connection_type(Some(auth_type), Some(server_type));
+
+    let connection_string: String =  define_auth_connection_type(Some(auth_type), Some(server_type), std_host_input, std_username_input, std_database_input, std_port_input).replace("\n", "");
 
     println!("{:?}", connection_string);
 
     return connection_string
-
 
     }
 
@@ -186,9 +256,8 @@ fn select_sql_server_type() -> SqlType{
 }
 
 fn main() -> io::Result<()> {
+    let server: SqlType  =  select_sql_server_type();
+    define_an_connect_endpoint(server);
 
-    let test  =  select_sql_server_type();
-    define_an_connect_endpoint(test);
-    // println!("{}",test);
     Ok(())
 }
